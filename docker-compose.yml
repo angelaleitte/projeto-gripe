@@ -1,0 +1,60 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: srag
+      MYSQL_USER: srag_user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command: >
+      --innodb-buffer-pool-size=256M
+      --max-connections=50
+      --innodb-log-file-size=64M
+    volumes:
+      - mysql_data:/var/lib/mysql
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ./app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql+pymysql://srag_user:${MYSQL_PASSWORD}@mysql:3306/srag
+    depends_on:
+      mysql:
+        condition: service_healthy
+    mem_limit: 768m
+    mem_reservation: 384m
+    cpus: 0.4
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.srag-dash.rule=Host(`dados.angelaleite.com`)"
+      - "traefik.http.routers.srag-dash.entrypoints=https"
+      - "traefik.http.routers.srag-dash.tls=true"
+      - "traefik.http.routers.srag-dash.tls.certresolver=letsencrypt"
+      - "traefik.http.services.srag-dash.loadbalancer.server.port=8050"
+
+  # Adminer NÃO é exposto publicamente por padrão (segurança — é uma
+  # interface de administração de banco de dados). Acesse via túnel SSH
+  # se precisar: ssh -L 8081:localhost:8081 root@76.13.168.152
+  # e depois abra http://localhost:8081 no seu navegador.
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    mem_limit: 64m
+    cpus: 0.1
+    ports:
+      - "127.0.0.1:8081:8080"
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_data:

@@ -1,0 +1,37 @@
+# Ambiente Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Variáveis de ambiente / segredos — NUNCA versionar
+.env
+.env.*
+*.pem
+*.key
+
+# Dados (arquivos grandes não devem ir pro Git — usar .gitignore + storage externo)
+*.csv
+*.parquet
+*.xlsx
+data/raw/
+data/processed/
+
+# Notebooks — checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+
+# Docker
+docker-compose.override.yml
