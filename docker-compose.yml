@@ -11,9 +11,10 @@ services:
       --innodb-buffer-pool-size=256M
       --max-connections=50
       --innodb-log-file-size=64M
+      --performance-schema=OFF
     volumes:
       - mysql_data:/var/lib/mysql
-    mem_limit: 512m
+    mem_limit: 1024m
     mem_reservation: 256m
     cpus: 0.5
     healthcheck:
