@@ -32,6 +32,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    expose:
+      - "8050"
     mem_limit: 768m
     mem_reservation: 384m
     cpus: 0.4
