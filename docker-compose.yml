@@ -37,6 +37,9 @@ services:
     mem_limit: 768m
     mem_reservation: 384m
     cpus: 0.4
+    networks:
+      - default
+      - coolify
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.srag-dash.rule=Host(`dados.angelaleite.com`)"
@@ -44,6 +47,7 @@ services:
       - "traefik.http.routers.srag-dash.tls=true"
       - "traefik.http.routers.srag-dash.tls.certresolver=letsencrypt"
       - "traefik.http.services.srag-dash.loadbalancer.server.port=8050"
+      - "traefik.docker.network=coolify"
 
   # Adminer NÃO é exposto publicamente por padrão (segurança — é uma
   # interface de administração de banco de dados). Acesse via túnel SSH
@@ -58,6 +62,10 @@ services:
       - "127.0.0.1:8081:8080"
     depends_on:
       - mysql
+
+networks:
+  coolify:
+    external: true
 
 volumes:
   mysql_data:
