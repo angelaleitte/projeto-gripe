@@ -11,6 +11,7 @@ pyarrow==16.1.0
 # Banco de dados
 SQLAlchemy==2.0.30
 PyMySQL==1.1.0
+cryptography==42.0.8
 
 # Mapas (Semana 2 — mapa coroplético por UF)
 # geopandas é opcional e pesado para instalar; comece só com plotly
