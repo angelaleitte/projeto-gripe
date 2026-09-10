@@ -21,7 +21,11 @@ def testar_conexao():
         return f"Erro ao conectar no MySQL: {e}"
 
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.FLATLY],
+    url_base_pathname="/gripe/",
+)
 server = app.server  # necessário para o gunicorn (app:server)
 
 app.layout = dbc.Container(
