@@ -13,10 +13,23 @@ localização, sintomas/comorbidades principais, vacinação, internação/UTI e
 desfecho). Dá pra ampliar depois, coluna a coluna, sempre conferindo o nome
 real no dicionário.
 
-Desvios de tipo em relação ao dicionário (documentados aqui de propósito):
+Desvios em relação ao dicionário, confirmados numa amostra real do arquivo
+INFLUD26 (2026) baixada de dadosabertos.saude.gov.br — documentados aqui de
+propósito:
 - nu_idade_n: o dicionário declara Varchar2(3), mas é um valor numérico
   (idade) usado em contas/agregações nas Semanas 2 e 3 do plano — modelado
   como Integer. Combinado com tp_idade (dia/mês/ano) pra interpretar certo.
+- nu_notific: o dicionário descreve 12 caracteres (1 dígito de tipo + 11
+  sequenciais), mas os valores reais do arquivo 2026 têm 14 caracteres
+  (ex: "31774964539629"). Ampliado para String(20) por segurança.
+- id_municip: no arquivo real existem DUAS colunas distintas — "ID_MUNICIP"
+  (nome do município, ex: "SAO PAULO") e "CO_MUN_NOT" (código IBGE de 6
+  dígitos, ex: "355030"). O dicionário trata as duas como sinônimos
+  ("ID_MUNICIP OU CO_MUN_NOT"), mas não são — aqui `id_municip` recebe o
+  valor de CO_MUN_NOT (o código), não da coluna "ID_MUNICIP" do CSV.
+- cs_sexo: o dicionário lista códigos numéricos (1-M/2-F/9-Ignorado), mas o
+  arquivo real traz letras ("F", "M"). Tipo (String(1)) não muda, só o
+  domínio de valores.
 """
 
 from sqlalchemy import Column, Date, Integer, MetaData, String, Table
@@ -28,7 +41,7 @@ notificacao = Table(
     "notificacao",
     metadata,
     # Identificação / tempo
-    Column("nu_notific", String(12), primary_key=True),  # NU_NOTIFIC
+    Column("nu_notific", String(20), primary_key=True),  # NU_NOTIFIC
     Column("dt_notific", Date),  # DT_NOTIFIC
     Column("sem_not", String(6)),  # SEM_NOT
     Column("dt_sin_pri", Date),  # DT_SIN_PRI — data dos primeiros sintomas
@@ -37,7 +50,7 @@ notificacao = Table(
     Column("sg_uf_not", String(2)),  # SG_UF_NOT
     Column(
         "id_municip", String(6), index=True
-    ),  # ID_MUNICIP (alias CO_MUN_NOT) — FK lógica p/ dim_municipio
+    ),  # vem de CO_MUN_NOT no CSV real (código IBGE) — FK lógica p/ dim_municipio
     # Demográficos
     Column("cs_sexo", String(1)),  # CS_SEXO — 1-M / 2-F / 9-Ignorado
     Column("dt_nasc", Date),  # DT_NASC
@@ -77,15 +90,14 @@ notificacao = Table(
 )
 
 # --- Dimensão: município ----------------------------------------------------
-# id_municip / sg_uf vêm do próprio dicionário SIVEP-Gripe (campo 4 — código
-# IBGE do município de notificação). nome_municipio NÃO está no dicionário
-# do SIVEP (que só traz o código) — precisa ser populado a partir da tabela
-# oficial de municípios do IBGE (ex: servicodados.ibge.gov.br/api/v1/localidades)
-# antes de usar em relatórios/gráficos.
+# id_municip vem de CO_MUN_NOT (código IBGE, 6 dígitos) no CSV real.
+# nome_municipio vem da coluna "ID_MUNICIP" do MESMO CSV (que, apesar do
+# nome, traz o nome do município, ex: "SAO PAULO") — confirmado numa amostra
+# real do arquivo, não precisa de fonte externa do IBGE.
 dim_municipio = Table(
     "dim_municipio",
     metadata,
-    Column("id_municip", String(6), primary_key=True),  # ID_MUNICIP (IBGE)
-    Column("sg_uf", String(2)),  # UF do município (padrão IBGE)
-    Column("nome_municipio", String(100)),  # fonte: tabela IBGE, não o SIVEP
+    Column("id_municip", String(6), primary_key=True),  # CO_MUN_NOT no CSV
+    Column("sg_uf", String(2)),  # SG_UF_NOT no CSV
+    Column("nome_municipio", String(100)),  # coluna "ID_MUNICIP" no CSV
 )
