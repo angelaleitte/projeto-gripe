@@ -20,6 +20,9 @@ env/
 data/raw/
 data/processed/
 
+# Saídas geradas por scripts de análise (recalculadas a cada execução)
+analise/estatisticas_idade.json
+
 # Notebooks — checkpoints
 .ipynb_checkpoints/
 
