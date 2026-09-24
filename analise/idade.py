@@ -11,6 +11,7 @@ na carga) em vez de duplicar a lógica de conexão aqui.
 """
 
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -75,6 +76,35 @@ if __name__ == "__main__":
             "-> distribuição aproximadamente simétrica em torno do centro."
         )
 
+    # Quartis calculados de forma independente, para conferir com o describe()
+    quartis = df["idade_anos"].quantile([0.25, 0.5, 0.75])
+    resumo = df["idade_anos"].describe()
+    bate = (
+        abs(quartis[0.25] - resumo["25%"]) < 1e-9
+        and abs(quartis[0.5] - resumo["50%"]) < 1e-9
+        and abs(quartis[0.75] - resumo["75%"]) < 1e-9
+    )
+    print("quantile([0.25, 0.5, 0.75]):")
+    print(quartis.to_string())
+    print(f"Bate com o describe()? {'sim' if bate else 'NÃO'}")
+
+    # Histograma (backend sem janela: só salva o arquivo)
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    ax = df["idade_anos"].hist(bins=20, edgecolor="white")
+    ax.axvline(media, color="red", linestyle="--", label=f"média = {media:.1f}")
+    ax.axvline(mediana, color="green", linestyle=":", label=f"mediana = {mediana:.1f}")
+    ax.set_title("Distribuição de idade dos casos de SRAG")
+    ax.set_xlabel("Idade (anos)")
+    ax.set_ylabel("Nº de casos")
+    ax.legend()
+    png = Path(__file__).resolve().parent / "histograma_idade.png"
+    ax.figure.savefig(png, dpi=120, bbox_inches="tight")
+    print(f"\nHistograma salvo em {png}")
+
     saida = Path(__file__).resolve().parent / "estatisticas_idade.json"
     saida.write_text(
         json.dumps(
@@ -83,4 +113,11 @@ if __name__ == "__main__":
         ),
         encoding="utf-8",
     )
-    print(f"\nEstatísticas salvas em {saida} (para o histograma de amanhã)")
+    print(f"Estatísticas salvas em {saida}")
+
+    # config.py (importado via carregar.py) já configurou o logging -> pipeline.log
+    logging.info(
+        f"Análise de idade: n={int(resumo['count'])}, média={media:.2f}, "
+        f"mediana={mediana:.2f}, moda={moda:.2f}, desvio={desvio:.2f}, "
+        f"quartis={quartis.round(2).tolist()} (bate com describe: {bate})"
+    )

@@ -22,6 +22,7 @@ data/processed/
 
 # Saídas geradas por scripts de análise (recalculadas a cada execução)
 analise/estatisticas_idade.json
+analise/histograma_idade.png
 
 # Notebooks — checkpoints
 .ipynb_checkpoints/
